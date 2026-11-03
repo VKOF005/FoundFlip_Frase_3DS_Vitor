@@ -8,14 +8,14 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Collapsible } from '@/components/ui/collapsible';
 import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export default function TabTwoScreen() {
   const safeAreaInsets = useSafeAreaInsets();
   const insets = {
     ...safeAreaInsets,
-    bottom: safeAreaInsets.bottom + BottomTabInset + Spacing.three,
+    bottom: safeAreaInsets.bottom + Spacing.three,
   };
   const theme = useTheme();
 
@@ -66,7 +66,7 @@ export default function TabTwoScreen() {
             </ThemedText>
             <ThemedText type="small">
               The layout file in <ThemedText type="code">src/app/_layout.tsx</ThemedText> sets up
-              the tab navigator.
+              the stack navigator.
             </ThemedText>
             <ExternalLink href="https://docs.expo.dev/router/introduction">
               <ThemedText type="linkPrimary">Learn more</ThemedText>
