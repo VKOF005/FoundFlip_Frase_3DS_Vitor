@@ -16,6 +16,7 @@ const DROP_TARGET_VERTICAL_PADDING = 20;
 
 interface DraggableOptionCardProps {
   active: boolean;
+  disabled: boolean;
   dropTarget: View | null;
   icon: ImageSourcePropType | null;
   label: string;
@@ -24,6 +25,7 @@ interface DraggableOptionCardProps {
 
 export function DraggableOptionCard({
   active,
+  disabled,
   dropTarget,
   icon,
   label,
@@ -44,7 +46,7 @@ export function DraggableOptionCard({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) + Math.abs(gestureState.dy) > 6,
+          !disabled && Math.abs(gestureState.dx) + Math.abs(gestureState.dy) > 6,
         onPanResponderGrant: () => {
           setIsDragging(true);
           translation.setOffset({ x: 0, y: 0 });
@@ -75,7 +77,7 @@ export function DraggableOptionCard({
         onPanResponderTerminate: snapBack,
         onPanResponderTerminationRequest: () => false,
       }),
-    [dropTarget, label, onDrop, snapBack, translation],
+    [disabled, dropTarget, label, onDrop, snapBack, translation],
   );
 
   return (
@@ -85,17 +87,32 @@ export function DraggableOptionCard({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint="Drag this answer onto the blank in the sentence."
+      accessibilityState={{ disabled }}
+      pointerEvents={disabled ? 'none' : 'auto'}
       style={[
         styles.optionCard,
+        disabled && styles.optionCardDisabled,
         isDragging && draggingStyles.card,
         { transform: translation.getTranslateTransform() },
       ]}>
       {icon && (
-        <View style={[styles.optionIconWrap, active && styles.optionIconWrapActive]}>
+        <View
+          style={[
+            styles.optionIconWrap,
+            active && !disabled && styles.optionIconWrapActive,
+            disabled && styles.optionIconWrapDisabled,
+          ]}>
           <Image source={icon} style={styles.optionImage} contentFit="contain" />
         </View>
       )}
-      <Text style={[styles.optionText, active && styles.optionTextActive]}>{label}</Text>
+      <Text
+        style={[
+          styles.optionText,
+          active && !disabled && styles.optionTextActive,
+          disabled && styles.optionTextDisabled,
+        ]}>
+        {label}
+      </Text>
     </Animated.View>
   );
 }

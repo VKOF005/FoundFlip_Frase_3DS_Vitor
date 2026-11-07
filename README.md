@@ -25,6 +25,20 @@ In the output, you'll find options to open the app in a
 
 You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Backend API client
+
+The shared JSON request helpers are in `src/services/api-client.ts`. Set
+`EXPO_PUBLIC_API_URL` in a root `.env.local` file to point to the Python API,
+for example:
+
+```env
+EXPO_PUBLIC_API_URL=http://192.168.1.10:5000/api
+```
+
+The default is `http://localhost:5000/api`. When testing on a physical phone,
+use the computer's local network IP instead of `localhost`. Do not put secrets
+in `EXPO_PUBLIC_` variables; they are included in the app bundle.
+
 ## Get a fresh project
 
 When you're ready, run:

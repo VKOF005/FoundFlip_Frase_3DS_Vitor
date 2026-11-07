@@ -49,7 +49,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderWidth: 2,
-    borderColor: '#092703',
+    borderColor: 'rgba(9, 39, 3, 0.6)',
     alignSelf: 'stretch',
     height: 60,
   },
@@ -142,6 +142,21 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  phraseBoxCorrect: {
+    backgroundColor: '#cfe9d3',
+    borderColor: '#b5d8bc',
+  },
+  phraseFeedbackOverlay: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 18,
+  },
+  phraseFeedbackIncorrect: {
+    backgroundColor: '#f6d5d5',
+  },
   quote: {
     fontSize: 34,
     fontWeight: '700',
@@ -204,6 +219,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
   },
+  optionCardDisabled: {
+    backgroundColor: '#d0d0d0',
+    borderColor: '#a8a8a8',
+  },
   optionIconWrap: {
     width: 34,
     height: 34,
@@ -217,6 +236,10 @@ export const styles = StyleSheet.create({
   },
   optionIconWrapActive: {
     backgroundColor: '#d1ebd7',
+  },
+  optionIconWrapDisabled: {
+    backgroundColor: '#dedede',
+    borderColor: '#bdbdbd',
   },
   optionIcon: {
     fontSize: 18,
@@ -233,6 +256,9 @@ export const styles = StyleSheet.create({
   },
   optionTextActive: {
     color: '#1d5c2c',
+  },
+  optionTextDisabled: {
+    color: '#777777',
   },
   tipCard: {
     marginTop: 18,
@@ -291,5 +317,36 @@ export const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '900',
     letterSpacing: 0.4,
+  },
+  successPopup: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '40%',
+    borderTopLeftRadius: 18,
+    borderTopRightRadius: 18,
+    backgroundColor: '#cfe9d3',
+    borderWidth: 2,
+    borderColor: '#8fc99a',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+    shadowColor: '#1a5b2b',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 8,
+  },
+  successPopupText: {
+    color: '#1a5b2b',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  successPopupButton: {
+    position: 'absolute',
+    left: 18,
+    right: 18,
+    bottom: 14,
   },
 });

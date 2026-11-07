@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { useCallback, useState } from 'react';
-import { ScrollView, Text, View, Pressable } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Animated, ScrollView, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DraggableOptionCard } from '@/components/draggable-option-card';
@@ -21,10 +21,97 @@ const emptyProgressSegment = require('../../assets/images/progress-segment-empty
 export default function HomeScreen() {
   const [progressValue, setProgressValue] = useState(3);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [answerFeedback, setAnswerFeedback] = useState<'correct' | 'incorrect' | null>(null);
+  const [attemptedWrongOptions, setAttemptedWrongOptions] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const N_Miss = useRef(0);
+  const [phraseFlash] = useState(() => new Animated.Value(0));
+  const [wrongAnswerReturn] = useState(() => new Animated.Value(0));
+  const [successPopupTranslation] = useState(() => new Animated.Value(1));
+  const [successPopupHeight, setSuccessPopupHeight] = useState(0);
+  const [isSuccessPopupVisible, setIsSuccessPopupVisible] = useState(false);
+  const [isReturningWrongAnswer, setIsReturningWrongAnswer] = useState(false);
   const [dropTarget, setDropTarget] = useState<View | null>(null);
   const setDropTargetRef = useCallback((target: View | null) => {
     setDropTarget(target);
   }, []);
+  const handleOptionDrop = useCallback((label: string) => {
+    setSelectedOption(label);
+    setAnswerFeedback(null);
+    phraseFlash.stopAnimation();
+    phraseFlash.setValue(0);
+    wrongAnswerReturn.stopAnimation();
+    wrongAnswerReturn.setValue(0);
+    successPopupTranslation.stopAnimation();
+    successPopupTranslation.setValue(1);
+    setIsSuccessPopupVisible(false);
+  }, [phraseFlash, successPopupTranslation, wrongAnswerReturn]);
+
+  const verifyAnswer = () => {
+    if (isReturningWrongAnswer) return;
+
+    const isCorrect = selectedOption === 'RESERVA';
+    setAnswerFeedback(isCorrect ? 'correct' : 'incorrect');
+
+    if (isCorrect) {
+      successPopupTranslation.setValue(1);
+      setIsSuccessPopupVisible(true);
+    } else {
+      setIsSuccessPopupVisible(false);
+    }
+
+    if (!isCorrect) {
+      if (selectedOption) {
+        N_Miss.current += 1;
+        setAttemptedWrongOptions((attempted) => new Set(attempted).add(selectedOption));
+        setIsReturningWrongAnswer(true);
+        wrongAnswerReturn.setValue(0);
+        Animated.timing(wrongAnswerReturn, {
+          toValue: 1,
+          duration: 450,
+          useNativeDriver: true,
+        }).start(({ finished }) => {
+          if (finished) {
+            setSelectedOption(null);
+            wrongAnswerReturn.setValue(0);
+          }
+          setIsReturningWrongAnswer(false);
+        });
+      }
+    }
+
+    phraseFlash.stopAnimation();
+    phraseFlash.setValue(0);
+    if (!isCorrect) {
+      Animated.sequence([
+        Animated.timing(phraseFlash, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(phraseFlash, {
+          toValue: 0,
+          duration: 420,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  };
+
+  // remover quando possuir uma ancora, a nao ser que precise do efeito de deslize para baixo.
+  const dismissSuccessPopup = () => {
+    successPopupTranslation.stopAnimation();
+    Animated.timing(successPopupTranslation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) {
+        setIsSuccessPopupVisible(false);
+      }
+    });
+  };
 
   const decreaseProgress = () => {
     setProgressValue((value) => {
@@ -96,20 +183,49 @@ export default function HomeScreen() {
 
           <Text style={styles.levelLabel}>Nível 4</Text>
           <Text style={styles.title}>{`COMPLETE\nA FRASE`}</Text>
-          <Text style={styles.subtitle}>Arraste a frase que completa a frase corretamente.</Text>
+          <Text style={styles.subtitle}>Arraste a palavra que complete a frase</Text>
 
-          <View style={styles.phraseBox}>
+          <View
+            style={[
+              styles.phraseBox,
+              answerFeedback === 'correct' && styles.phraseBoxCorrect,
+            ]}>
+            {answerFeedback === 'incorrect' && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.phraseFeedbackOverlay,
+                  styles.phraseFeedbackIncorrect,
+                  { opacity: phraseFlash },
+                ]}
+              />
+            )}
             <Text style={styles.quote}>“</Text>
             <View style={styles.answerLine}>
               <Text style={styles.answerText}>Uma</Text>
               <View ref={setDropTargetRef} style={styles.blankSlot} collapsable={false}>
-                <Text
+                <Animated.Text
                   style={[
                     styles.blankText,
                     selectedOption && styles.blankSelectedText,
+                    selectedOption &&
+                      answerFeedback === 'incorrect' && {
+                        opacity: wrongAnswerReturn.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1, 0],
+                        }),
+                        transform: [
+                          {
+                            translateY: wrongAnswerReturn.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 32],
+                            }),
+                          },
+                        ],
+                      },
                   ]}>
                   {selectedOption ?? '____'}
-                </Text>
+                </Animated.Text>
               </View>
               <Text style={styles.answerText}>de emergência</Text>
               <Text style={styles.answerText}>ajuda em situações inesperadas</Text>
@@ -128,8 +244,9 @@ export default function HomeScreen() {
                   label={label}
                   icon={icon}
                   active={active}
+                  disabled={attemptedWrongOptions.has(label)}
                   dropTarget={dropTarget}
-                  onDrop={setSelectedOption}
+                  onDrop={handleOptionDrop}
                 />
               ))}
           </View>
@@ -150,12 +267,50 @@ export default function HomeScreen() {
               pressed && styles.verifyButtonPressed,
             ]}
             accessibilityRole="button"
-            onPress={() => undefined}>
+            onPress={verifyAnswer}>
             <Text style={styles.verifyText}>VERIFICAR</Text>
           </Pressable>
         </ScrollView>
 
         <NavbarBottom />
+        {isSuccessPopupVisible && (
+          <Animated.View
+            accessibilityLiveRegion="polite"
+            onLayout={({ nativeEvent }) => {
+              setSuccessPopupHeight(nativeEvent.layout.height);
+              Animated.spring(successPopupTranslation, {
+                toValue: 0,
+                damping: 18,
+                stiffness: 160,
+                useNativeDriver: true,
+              }).start();
+            }}
+            style={[
+              styles.successPopup,
+              {
+                transform: [
+                  {
+                    translateY: successPopupTranslation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, successPopupHeight],
+                    }),
+                  },
+                ],
+              },
+            ]}>
+            <Text style={styles.successPopupText}>Resposta correta!</Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.verifyButton,
+                styles.successPopupButton,
+                pressed && styles.verifyButtonPressed,
+              ]}
+              accessibilityRole="button"
+              onPress={dismissSuccessPopup}>
+              <Text style={styles.verifyText}>CONTINUAR</Text>
+            </Pressable>
+          </Animated.View>
+        )}
       </View>
     </SafeAreaView>
   );
